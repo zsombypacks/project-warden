@@ -1,0 +1,24 @@
+name: Build
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Convert fonts
+        shell: python
+        run: |
+          import subprocess, sys
+          subprocess.check_call([sys.executable, "-m", "pip", "install", "fonttools", "brotli"])
+          from fontTools.ttLib import TTFont
+          for n in ("Regular", "Bold"):
+              f = TTFont(f"assets/CursorGothic-{n}.woff2")
+              f.flavor = None
+              f.save(f"assets/CursorGothic-{n}.ttf")
+      - run: dir assets
+      - run: cargo build --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ProjectWarden
+          path: target/release/project-warden.exe
